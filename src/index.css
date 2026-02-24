@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Your custom eco-friendly theme colors */
+/* Custom theme colors for eco-friendly green accent */
 @theme {
   --color-eco-50: #f0fdf4;
   --color-eco-100: #dcfce7;
