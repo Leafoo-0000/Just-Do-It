@@ -3,43 +3,34 @@ import Sidebar from '@/components/Sidebar';
 import TopNavbar from '@/components/TopNavbar';
 import AddHabitModal from '@/components/AddHabitModal';
 import { CheckCircle, Circle, Plus } from 'lucide-react';
-import { supabase, getHabits, updateHabit } from '@/lib/supabase';
+import { getHabits, updateHabit, addHabit as addHabitToSupabase } from '@/lib/supabase';
 import type { Habit } from '@/types';
 
-// HARDCODED DATA FOR TESTING (Remove this when Supabase is connected)
-const HARDCODED_HABITS: Habit[] = [
-  { id: '1', name: 'Use reusable water bottle', frequency: 'Daily', completed: true },
-  { id: '2', name: 'Bike to work', frequency: 'Daily', completed: true },
-  { id: '3', name: 'Meal prep with local produce', frequency: 'Weekly', completed: false },
-  { id: '4', name: 'Turn off lights when leaving room', frequency: 'Daily', completed: false },
-];
+// Toggle between users to test
+const BASIL_USER_ID = '3cc74c07-e3a2-4c58-ae62-a5c7206f52d3';
+const TINA_USER_ID = '80d677f8-46de-467e-85ce-c4aaaab6dcbd';
 
-// Toggle this to switch between hardcoded and Supabase
-const USE_SUPABASE = false; // Set to true when ready
-const TEST_USER_ID = 'basil-user-id-here'; // Replace with real UUID from Supabase
+// Change this to test different users
+const CURRENT_USER_ID = BASIL_USER_ID; // or TINA_USER_ID
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [habits, setHabits] = useState<Habit[]>(HARDCODED_HABITS);
-  const [loading, setLoading] = useState(false);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch from Supabase when USE_SUPABASE is true
+  // Fetch habits from Supabase on load
   useEffect(() => {
-    if (USE_SUPABASE) {
-      fetchHabits();
-    }
+    fetchHabits();
   }, []);
 
   async function fetchHabits() {
     try {
       setLoading(true);
-      const data = await getHabits(TEST_USER_ID);
+      const data = await getHabits(CURRENT_USER_ID);
       setHabits(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch habits');
-      // Fallback to hardcoded if Supabase fails
-      setHabits(HARDCODED_HABITS);
     } finally {
       setLoading(false);
     }
@@ -56,35 +47,31 @@ export default function Dashboard() {
       h.id === id ? { ...h, completed: newCompleted } : h
     ));
 
-    // Update Supabase if enabled
-    if (USE_SUPABASE) {
-      try {
-        await updateHabit(id, { completed: newCompleted });
-      } catch (err) {
-        // Revert on error
-        setHabits(habits.map(h => 
-          h.id === id ? { ...h, completed: habit.completed } : h
-        ));
-        setError('Failed to update habit');
-      }
+    try {
+      await updateHabit(id, { completed: newCompleted });
+    } catch (err) {
+      // Revert on error
+      setHabits(habits.map(h => 
+        h.id === id ? { ...h, completed: habit.completed } : h
+      ));
+      setError('Failed to update habit');
     }
   };
 
-  const addHabit = (newHabit: Omit<Habit, 'id'>) => {
-    const habit: Habit = {
-      ...newHabit,
-      id: Date.now().toString(),
-    };
-    setHabits([...habits, habit]);
-    
-    // TODO: Add Supabase insert when USE_SUPABASE is true
+  const addHabit = async (newHabit: Omit<Habit, 'id'>) => {
+    try {
+      const habit = await addHabitToSupabase(newHabit, CURRENT_USER_ID);
+      setHabits([...habits, habit]);
+    } catch (err) {
+      setError('Failed to add habit');
+    }
   };
 
   const completedCount = habits.filter(h => h.completed).length;
   const totalCount = habits.length;
   const consistency = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
