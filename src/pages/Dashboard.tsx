@@ -1,23 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import TopNavbar from '@/components/TopNavbar';
 import AddHabitModal from '@/components/AddHabitModal';
 import { CheckCircle, Circle, Plus } from 'lucide-react';
+import { supabase, getHabits, updateHabit } from '@/lib/supabase';
 import type { Habit } from '@/types';
+
+// HARDCODED DATA FOR TESTING (Remove this when Supabase is connected)
+const HARDCODED_HABITS: Habit[] = [
+  { id: '1', name: 'Use reusable water bottle', frequency: 'Daily', completed: true },
+  { id: '2', name: 'Bike to work', frequency: 'Daily', completed: true },
+  { id: '3', name: 'Meal prep with local produce', frequency: 'Weekly', completed: false },
+  { id: '4', name: 'Turn off lights when leaving room', frequency: 'Daily', completed: false },
+];
+
+// Toggle this to switch between hardcoded and Supabase
+const USE_SUPABASE = false; // Set to true when ready
+const TEST_USER_ID = 'basil-user-id-here'; // Replace with real UUID from Supabase
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [habits, setHabits] = useState<Habit[]>([
-    { id: '1', name: 'Use reusable water bottle', frequency: 'Daily', completed: true },
-    { id: '2', name: 'Bike to work', frequency: 'Daily', completed: true },
-    { id: '3', name: 'Meal prep with local produce', frequency: 'Weekly', completed: false },
-    { id: '4', name: 'Turn off lights when leaving room', frequency: 'Daily', completed: false },
-  ]);
+  const [habits, setHabits] = useState<Habit[]>(HARDCODED_HABITS);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleHabit = (id: string) => {
+  // Fetch from Supabase when USE_SUPABASE is true
+  useEffect(() => {
+    if (USE_SUPABASE) {
+      fetchHabits();
+    }
+  }, []);
+
+  async function fetchHabits() {
+    try {
+      setLoading(true);
+      const data = await getHabits(TEST_USER_ID);
+      setHabits(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch habits');
+      // Fallback to hardcoded if Supabase fails
+      setHabits(HARDCODED_HABITS);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const toggleHabit = async (id: string) => {
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+
+    const newCompleted = !habit.completed;
+    
+    // Optimistic update
     setHabits(habits.map(h => 
-      h.id === id ? { ...h, completed: !h.completed } : h
+      h.id === id ? { ...h, completed: newCompleted } : h
     ));
+
+    // Update Supabase if enabled
+    if (USE_SUPABASE) {
+      try {
+        await updateHabit(id, { completed: newCompleted });
+      } catch (err) {
+        // Revert on error
+        setHabits(habits.map(h => 
+          h.id === id ? { ...h, completed: habit.completed } : h
+        ));
+        setError('Failed to update habit');
+      }
+    }
   };
 
   const addHabit = (newHabit: Omit<Habit, 'id'>) => {
@@ -26,20 +76,29 @@ export default function Dashboard() {
       id: Date.now().toString(),
     };
     setHabits([...habits, habit]);
+    
+    // TODO: Add Supabase insert when USE_SUPABASE is true
   };
 
   const completedCount = habits.filter(h => h.completed).length;
   const totalCount = habits.length;
-  const consistency = Math.round((completedCount / totalCount) * 100);
+  const consistency = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-
       <div className="flex-1 ml-64">
         <TopNavbar pageTitle="Dashboard" />
-
         <main className="p-8">
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700">
+              {error}
+            </div>
+          )}
+          
+          {/* Rest of your Dashboard JSX remains the same */}
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white border border-gray-300 p-6 shadow-sm">
@@ -50,7 +109,7 @@ export default function Dashboard() {
               <div className="mt-3 w-full bg-gray-200 h-2">
                 <div 
                   className="bg-gray-900 h-2 transition-all duration-500"
-                  style={{ width: `${(completedCount / totalCount) * 100}%` }}
+                  style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
                 />
               </div>
             </div>
