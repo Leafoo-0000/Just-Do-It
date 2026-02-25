@@ -8,7 +8,7 @@ import { getHabits, updateHabit, deleteHabit, addHabit as addHabitToSupabase } f
 import type { Habit } from '@/types';
 
 const CURRENT_USER_ID = '3cc74c07-e3a2-4c58-ae62-a5c7206f52d3';
-
+ 
 export default function MyHabits() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
