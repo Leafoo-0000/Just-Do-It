@@ -6,12 +6,9 @@ import { CheckCircle, Circle, Plus } from 'lucide-react';
 import { getHabits, updateHabit, addHabit as addHabitToSupabase } from '@/lib/supabase';
 import type { Habit } from '@/types';
 
-// Toggle between users to test
 const BASIL_USER_ID = '3cc74c07-e3a2-4c58-ae62-a5c7206f52d3';
 const TINA_USER_ID = '80d677f8-46de-467e-85ce-c4aaaab6dcbd';
-
-// Change this to test different users
-const CURRENT_USER_ID = BASIL_USER_ID; // or TINA_USER_ID
+const CURRENT_USER_ID = BASIL_USER_ID;
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +16,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch habits from Supabase on load
   useEffect(() => {
     fetchHabits();
   }, []);
@@ -42,7 +38,6 @@ export default function Dashboard() {
 
     const newCompleted = !habit.completed;
     
-    // Optimistic update
     setHabits(habits.map(h => 
       h.id === id ? { ...h, completed: newCompleted } : h
     ));
@@ -50,7 +45,6 @@ export default function Dashboard() {
     try {
       await updateHabit(id, { completed: newCompleted });
     } catch (err) {
-      // Revert on error
       setHabits(habits.map(h => 
         h.id === id ? { ...h, completed: habit.completed } : h
       ));
@@ -62,6 +56,7 @@ export default function Dashboard() {
     try {
       const habit = await addHabitToSupabase(newHabit, CURRENT_USER_ID);
       setHabits([...habits, habit]);
+      setIsModalOpen(false);
     } catch (err) {
       setError('Failed to add habit');
     }
@@ -85,82 +80,44 @@ export default function Dashboard() {
             </div>
           )}
           
-          {/* Rest of your Dashboard JSX remains the same */}
-          {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white border border-gray-300 p-6 shadow-sm">
               <p className="text-sm text-gray-600 mb-2 font-medium">Habits Completed Today</p>
-              <p className="text-4xl font-bold text-gray-900">
-                {completedCount}/{totalCount}
-              </p>
+              <p className="text-4xl font-bold text-gray-900">{completedCount}/{totalCount}</p>
               <div className="mt-3 w-full bg-gray-200 h-2">
-                <div 
-                  className="bg-gray-900 h-2 transition-all duration-500"
-                  style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
-                />
+                <div className="bg-gray-900 h-2 transition-all duration-500" style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }} />
               </div>
             </div>
-
             <div className="bg-white border border-gray-300 p-6 shadow-sm">
               <p className="text-sm text-gray-600 mb-2 font-medium">Weekly Consistency %</p>
               <p className="text-4xl font-bold text-gray-900">{consistency}%</p>
-              <p className="text-xs text-gray-500 mt-2">Keep it up! You're building great habits.</p>
             </div>
-
             <div className="bg-white border border-gray-300 p-6 shadow-sm">
               <p className="text-sm text-gray-600 mb-2 font-medium">Sustainability Score</p>
               <p className="text-4xl font-bold text-gray-900">850</p>
-              <p className="text-xs text-green-600 mt-2 font-medium">+12 points this week</p>
             </div>
           </div>
 
-          {/* Today's Habits Section */}
           <div className="bg-white border border-gray-300 shadow-sm">
             <div className="p-6 border-b border-gray-300 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-900">Today's Habits</h3>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white border border-gray-900 hover:bg-gray-800 transition-colors font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Add New Habit
+              <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white border border-gray-900 hover:bg-gray-800 transition-colors font-medium">
+                <Plus className="w-4 h-4" /> Add New Habit
               </button>
             </div>
-
             <div className="divide-y divide-gray-300">
               {habits.map((habit) => (
-                <div
-                  key={habit.id}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                >
+                <div key={habit.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-4">
-                    <button 
-                      onClick={() => toggleHabit(habit.id)}
-                      className="w-6 h-6 flex items-center justify-center focus:outline-none"
-                    >
-                      {habit.completed ? (
-                        <CheckCircle className="w-6 h-6 text-gray-900" />
-                      ) : (
-                        <Circle className="w-6 h-6 text-gray-400 hover:text-gray-600" />
-                      )}
+                    <button onClick={() => toggleHabit(habit.id)} className="w-6 h-6 flex items-center justify-center focus:outline-none">
+                      {habit.completed ? <CheckCircle className="w-6 h-6 text-gray-900" /> : <Circle className="w-6 h-6 text-gray-400 hover:text-gray-600" />}
                     </button>
                     <div>
-                      <p className={`font-medium transition-all ${
-                        habit.completed ? 'text-gray-400 line-through' : 'text-gray-900'
-                      }`}>
-                        {habit.name}
-                      </p>
+                      <p className={`font-medium transition-all ${habit.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{habit.name}</p>
                       <p className="text-sm text-gray-600">{habit.frequency}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => toggleHabit(habit.id)}
-                    className={`px-4 py-2 border transition-colors font-medium ${
-                      habit.completed 
-                        ? 'border-gray-300 text-gray-500 bg-gray-100' 
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
+                  <button onClick={() => toggleHabit(habit.id)} className={`px-4 py-2 border transition-colors font-medium ${habit.completed ? 'border-gray-300 text-gray-500 bg-gray-100' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}>
                     {habit.completed ? 'Completed' : 'Mark Complete'}
                   </button>
                 </div>
@@ -169,13 +126,7 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
-
-      {isModalOpen && (
-        <AddHabitModal 
-          onClose={() => setIsModalOpen(false)} 
-          onSave={addHabit}
-        />
-      )}
+      {isModalOpen && <AddHabitModal onClose={() => setIsModalOpen(false)} onSave={addHabit} />}
     </div>
   );
 }
