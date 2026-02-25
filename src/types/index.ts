@@ -14,3 +14,12 @@ export interface AddHabitModalProps {
   onClose: () => void;
   onSave?: (habit: Omit<Habit, 'id'>) => void;
 }
+
+export interface Habit {
+  id: string;
+  name: string;
+  frequency: 'Daily' | 'Weekly' | 'Monthly';
+  completed: boolean;
+  reminder_enabled?: boolean; // Add this
+  category?: string;
+}

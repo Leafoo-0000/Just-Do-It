@@ -21,7 +21,11 @@ export async function getHabits(userId: string): Promise<Habit[]> {
 export async function addHabit(habit: Omit<Habit, 'id' | 'created_at'>, userId: string) {
   const { data, error } = await supabase
     .from('habits')
-    .insert([{ ...habit, user_id: userId }])
+    .insert([{ 
+      ...habit, 
+      user_id: userId,
+      reminder_enabled: habit.reminder_enabled || false // Ensure it's saved
+    }])
     .select()
     .single();
   

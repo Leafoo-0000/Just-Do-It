@@ -5,7 +5,7 @@ import type { AddHabitModalProps } from '@/types';
 export default function AddHabitModal({ onClose, onSave }: AddHabitModalProps) {
   const [habitName, setHabitName] = useState('');
   const [frequency, setFrequency] = useState<'Daily' | 'Weekly'>('Daily');
-  const [reminder, setReminder] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(false); // Add this state
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,6 +14,7 @@ export default function AddHabitModal({ onClose, onSave }: AddHabitModalProps) {
         name: habitName,
         frequency,
         completed: false,
+        reminder_enabled: reminderEnabled, // Include reminder in save
       });
     }
     onClose();
@@ -45,7 +46,7 @@ export default function AddHabitModal({ onClose, onSave }: AddHabitModalProps) {
                 id="habitName"
                 value={habitName}
                 onChange={(e) => setHabitName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-gray-900 transition-colors"
+                className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-gray-500 transition-colors"
                 placeholder="e.g., Use reusable bags for shopping"
                 required
               />
@@ -81,26 +82,27 @@ export default function AddHabitModal({ onClose, onSave }: AddHabitModalProps) {
               </div>
             </div>
 
+            {/* Updated Reminder Toggle */}
             <div className="flex items-center justify-between py-4 border-t border-b border-gray-300">
               <label htmlFor="reminder" className="text-sm font-medium text-gray-900">
                 Enable Reminders
               </label>
               <button
                 type="button"
-                onClick={() => setReminder(!reminder)}
+                onClick={() => setReminderEnabled(!reminderEnabled)}
                 className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                  reminder ? 'bg-gray-900' : 'bg-gray-300'
+                  reminderEnabled ? 'bg-gray-900' : 'bg-gray-300'
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform bg-white transition-transform ${
-                    reminder ? 'translate-x-6' : 'translate-x-1'
+                    reminderEnabled ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>
             </div>
 
-            <div className="flex gap-4 pt-2">
+            <div className="flex gap-4">
               <button
                 type="button"
                 onClick={onClose}
