@@ -8,12 +8,13 @@ import MyHabits from './pages/MyHabits';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
+import Progress from './pages/Progress/index';
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0"> {/* Added min-w-0 */}
+      <div className="flex-1 flex flex-col min-w-0">
         <TopNavbar />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
@@ -26,7 +27,6 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const { user, loading } = useAuth();
 
-  // ⭐ KEY FIX: Wait for auth to initialize before rendering routes
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -74,7 +74,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AuthenticatedLayout>
-                <div className="text-center text-gray-500 mt-20">Progress page coming soon...</div>
+                <Progress />
               </AuthenticatedLayout>
             </ProtectedRoute>
           }
@@ -84,7 +84,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AuthenticatedLayout>
-                <Profile />  {/* Change from placeholder div */}
+                <Profile />
               </AuthenticatedLayout>
             </ProtectedRoute>
           }

@@ -88,33 +88,33 @@ export default function Dashboard() {
     }
   };
 
-  const toggleHabit = async (habitId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('habits')
-        .update({ completed: !currentStatus })
-        .eq('id', habitId);
+  // In Dashboard.tsx, update the toggleHabit function:
 
-      if (error) throw error;
+const toggleHabit = async (habitId: string, currentStatus: boolean) => {
+  try {
+    // Update habit status
+    const { error } = await supabase
+      .from('habits')
+      .update({ completed: !currentStatus })
+      .eq('id', habitId);
 
-      setHabits(habits.map(h => 
-        h.id === habitId ? { ...h, completed: !currentStatus } : h
-      ));
-      
-      const newCompleted = !currentStatus 
-        ? stats.completedToday + 1 
-        : stats.completedToday - 1;
-      setStats({
-        ...stats,
-        completedToday: newCompleted,
-        weeklyConsistency: habits.length > 0 
-          ? Math.round((newCompleted / habits.length) * 100) 
-          : 0
+    if (error) throw error;
+
+    // LOG TO HABIT_LOGS when completing (not uncompleting)
+    if (!currentStatus && user) {
+      await supabase.from('habit_logs').insert({
+        user_id: user.id,
+        habit_id: habitId,
+        completed_at: new Date().toISOString()
       });
-    } catch (err) {
-      console.error('Error updating habit:', err);
     }
-  };
+
+    // Update local state...
+    
+  } catch (err) {
+    console.error('Error updating habit:', err);
+  }
+};
 
   if (loading) {
     return (
