@@ -1,21 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import type { Habit } from '@/types';
+
+interface Habit {
+  id: string;
+  name: string;
+  frequency: string;
+  completed: boolean;
+  reminder_enabled: boolean;
+  created_at: string;
+}
 
 interface EditHabitModalProps {
-  habit: Habit;
+  isOpen: boolean;
+  habit: Habit | null;
   onClose: () => void;
   onSave: (id: string, updates: Partial<Habit>) => void;
 }
 
-export default function EditHabitModal({ habit, onClose, onSave }: EditHabitModalProps) {
-  const [name, setName] = useState(habit.name);
-  const [frequency, setFrequency] = useState(habit.frequency);
+export default function EditHabitModal({ isOpen, habit, onClose, onSave }: EditHabitModalProps) {
+  const [name, setName] = useState('');
+  const [frequency, setFrequency] = useState<string>('Daily'); // Changed from union type to string
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (habit) {
+      setName(habit.name);
+      // Capitalize first letter to match our state format
+      const capitalizedFreq = habit.frequency.charAt(0).toUpperCase() + habit.frequency.slice(1);
+      setFrequency(capitalizedFreq);
+    }
+  }, [habit]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => { // Fixed FormEvent type
     e.preventDefault();
-    onSave(habit.id, { name, frequency });
+    if (habit) {
+      onSave(habit.id, { name, frequency: frequency.toLowerCase() });
+    }
+    onClose();
   };
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  if (!isOpen || !habit) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -23,7 +50,7 @@ export default function EditHabitModal({ habit, onClose, onSave }: EditHabitModa
         <div className="flex items-center justify-between p-6 border-b border-gray-300">
           <h3 className="text-xl font-semibold text-gray-900">Edit Habit</h3>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
           >
             <X className="w-5 h-5 text-gray-700" />
@@ -33,12 +60,12 @@ export default function EditHabitModal({ habit, onClose, onSave }: EditHabitModa
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="habitName" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="editHabitName" className="block text-sm font-medium text-gray-900 mb-2">
                 Habit Name
               </label>
               <input
                 type="text"
-                id="habitName"
+                id="editHabitName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-gray-900 transition-colors"
@@ -47,17 +74,17 @@ export default function EditHabitModal({ habit, onClose, onSave }: EditHabitModa
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-3">
+              <span className="block text-sm font-medium text-gray-900 mb-3">
                 Frequency
-              </label>
+              </span>
               <div className="flex gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
-                    name="frequency"
+                    name="editFrequency"
                     value="Daily"
                     checked={frequency === 'Daily'}
-                    onChange={(e) => setFrequency(e.target.value as 'Daily')}
+                    onChange={(e) => setFrequency(e.target.value)}
                     className="w-4 h-4 accent-gray-900"
                   />
                   <span className="text-gray-900">Daily</span>
@@ -65,10 +92,10 @@ export default function EditHabitModal({ habit, onClose, onSave }: EditHabitModa
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
-                    name="frequency"
+                    name="editFrequency"
                     value="Weekly"
                     checked={frequency === 'Weekly'}
-                    onChange={(e) => setFrequency(e.target.value as 'Weekly')}
+                    onChange={(e) => setFrequency(e.target.value)}
                     className="w-4 h-4 accent-gray-900"
                   />
                   <span className="text-gray-900">Weekly</span>
@@ -79,7 +106,7 @@ export default function EditHabitModal({ habit, onClose, onSave }: EditHabitModa
             <div className="flex gap-4 pt-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors font-medium"
               >
                 Cancel
