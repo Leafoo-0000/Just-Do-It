@@ -1,38 +1,97 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Dashboard from '@/pages/Dashboard';
-import MyHabits from '@/pages/MyHabits';
+import { useAuth } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Sidebar from './components/Sidebar';
+import TopNavbar from './components/TopNavbar';
+import Dashboard from './pages/Dashboard';
+import MyHabits from './pages/MyHabits';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
-// Placeholder components for future routes
-const Progress = () => (
-  <div className="flex min-h-screen bg-gray-50 ml-64 p-8">
-    <div className="bg-white border border-gray-300 p-8 w-full">
-      <h2 className="text-2xl font-bold text-gray-900">Progress</h2>
-      <p className="text-gray-600 mt-4">Analytics coming soon...</p>
+function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopNavbar />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
     </div>
-  </div>
-);
+  );
+}
 
-const Profile = () => (
-  <div className="flex min-h-screen bg-gray-50 ml-64 p-8">
-    <div className="bg-white border border-gray-300 p-8 w-full">
-      <h2 className="text-2xl font-bold text-gray-900">Profile</h2>
-      <p className="text-gray-600 mt-4">Profile settings coming soon...</p>
-    </div>
-  </div>
-);
+function AppContent() {
+  const { user } = useAuth();
 
-function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/my-habits" element={<MyHabits />} />
-        <Route path="/progress" element={<Progress />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Public routes */}
+        <Route 
+          path="/login" 
+          element={user ? <Navigate to="/dashboard" /> : <Login />} 
+        />
+        <Route 
+          path="/signup" 
+          element={user ? <Navigate to="/dashboard" /> : <Signup />} 
+        />
+
+        {/* Protected routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <AuthenticatedLayout>
+                <Dashboard />
+              </AuthenticatedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-habits"
+          element={
+            <ProtectedRoute>
+              <AuthenticatedLayout>
+                <MyHabits />
+              </AuthenticatedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/progress"
+          element={
+            <ProtectedRoute>
+              <AuthenticatedLayout>
+                <div className="text-center text-gray-500 mt-20">Progress page coming soon...</div>
+              </AuthenticatedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <AuthenticatedLayout>
+                <div className="text-center text-gray-500 mt-20">Profile page coming soon...</div>
+              </AuthenticatedLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Default redirect */}
+        <Route 
+          path="/" 
+          element={<Navigate to={user ? "/dashboard" : "/login"} />} 
+        />
+        <Route 
+          path="*" 
+          element={<Navigate to={user ? "/dashboard" : "/login"} />} 
+        />
       </Routes>
     </Router>
   );
 }
 
-export default App;
+export default function App() {
+  return <AppContent />;
+}

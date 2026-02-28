@@ -1,25 +1,58 @@
-import { Bell, ChevronDown } from 'lucide-react';
-import type { TopNavbarProps } from '@/types';
+import { Bell, ChevronDown, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface TopNavbarProps {
+  pageTitle?: string;
+}
 
 export default function TopNavbar({ pageTitle }: TopNavbarProps) {
+  const { user, signOut } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  const displayName = user?.email?.split('@')[0] || 'User';
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
-    <header className="bg-white border-b border-gray-300 px-8 py-4 flex items-center justify-between sticky top-0 z-40">
-      <h2 className="text-2xl font-semibold text-gray-900">{pageTitle}</h2>
+    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6">
+      <div className="flex-1">
+        {pageTitle && <h1 className="text-xl font-semibold text-gray-900">{pageTitle}</h1>}
+      </div>
 
-      <div className="flex items-center gap-6">
-        {/* Notification Icon */}
-        <button className="w-10 h-10 flex items-center justify-center border border-gray-300 bg-white hover:bg-gray-100 transition-colors">
-          <Bell className="w-5 h-5 text-gray-700" />
+      <div className="flex items-center gap-4">
+        <button className="p-2 text-gray-400 hover:text-gray-600 relative">
+          <Bell size={20} />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
 
-        {/* User Avatar Dropdown */}
-        <button className="flex items-center gap-3 px-4 py-2 border border-gray-300 bg-white hover:bg-gray-100 transition-colors">
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-700">B</span>
-          </div>
-          <span className="text-gray-900 font-medium">Basil</span>
-          <ChevronDown className="w-4 h-4 text-gray-600" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100"
+          >
+            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-medium">
+              {initial}
+            </div>
+            <span className="font-medium text-gray-700 capitalize">{displayName}</span>
+            <ChevronDown size={16} className="text-gray-400" />
+          </button>
+
+          {showDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                <LogOut size={16} />
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

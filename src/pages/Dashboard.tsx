@@ -5,25 +5,27 @@ import AddHabitModal from '@/components/AddHabitModal';
 import { CheckCircle, Circle, Plus } from 'lucide-react';
 import { getHabits, updateHabit, addHabit as addHabitToSupabase } from '@/lib/supabase';
 import type { Habit } from '@/types';
-
-const BASIL_USER_ID = '3cc74c07-e3a2-4c58-ae62-a5c7206f52d3';
-const TINA_USER_ID = '80d677f8-46de-467e-85ce-c4aaaab6dcbd';
-const CURRENT_USER_ID = BASIL_USER_ID;
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchHabits();
-  }, []);
+    if (user) {
+      fetchHabits();
+    }
+  }, [user]);
 
   async function fetchHabits() {
+    if (!user) return;
+    
     try {
       setLoading(true);
-      const data = await getHabits(CURRENT_USER_ID);
+      const data = await getHabits(user.id);
       setHabits(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch habits');
@@ -52,9 +54,11 @@ export default function Dashboard() {
     }
   };
 
-  const addHabit = async (newHabit: Omit<Habit, 'id'>) => {
+  const addHabit = async (newHabit: Omit<Habit, 'id' | 'created_at'>) => {
+    if (!user) return;
+    
     try {
-      const habit = await addHabitToSupabase(newHabit, CURRENT_USER_ID);
+      const habit = await addHabitToSupabase(newHabit, user.id);
       setHabits([...habits, habit]);
       setIsModalOpen(false);
     } catch (err) {
@@ -72,7 +76,6 @@ export default function Dashboard() {
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 ml-64">
-        <TopNavbar pageTitle="Dashboard" />
         <main className="p-8">
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-300 text-red-700">
