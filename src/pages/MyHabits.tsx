@@ -93,20 +93,22 @@ export default function MyHabits() {
     }
   };
 
-  const toggleHabit = async (habitId: string, currentStatus: boolean) => {
+  const toggleHabit = async (habitId: string) => {
+    if (!user) return;
+
     try {
       const { error } = await supabase
-        .from('habits')
-        .update({ completed: !currentStatus })
-        .eq('id', habitId);
+        .rpc('toggle_habit_completion', {
+          p_habit_id: habitId,
+          p_user_id: user.id,
+          p_current_status: false
+        });
 
       if (error) throw error;
-
-      setHabits(habits.map(h => 
-        h.id === habitId ? { ...h, completed: !currentStatus } : h
-      ));
+      
+      await fetchHabits();
     } catch (err) {
-      console.error('Error updating habit:', err);
+      console.error('Error toggling habit:', err);
     }
   };
 

@@ -30,12 +30,12 @@ export default function Dashboard() {
     if (!user) return;
     
     try {
+      // Use the database function to get habits with completion status
       const { data, error } = await supabase
-        .from('habits')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-        
+        .rpc('get_habits_with_status', {
+          p_user_id: user.id
+        });
+
       if (error) throw error;
       
       const habitsData = data || [];
@@ -58,7 +58,32 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchHabits();
+    
+    // Refresh every minute to check for day/week changes
+    const interval = setInterval(fetchHabits, 60000);
+    return () => clearInterval(interval);
   }, [user]);
+
+  const handleToggleHabit = async (habitId: string) => {
+    if (!user) return;
+
+    try {
+      // Use the database function to toggle completion
+      const { data: newStatus, error } = await supabase
+        .rpc('toggle_habit_completion', {
+          p_habit_id: habitId,
+          p_user_id: user.id,
+          p_current_status: false // Parameter kept for compatibility
+        });
+
+      if (error) throw error;
+      
+      // Refresh to get updated status
+      await fetchHabits();
+    } catch (err) {
+      console.error('Error toggling habit:', err);
+    }
+  };
 
   const handleSaveHabit = async (habitData: {
     name: string;
@@ -75,46 +100,18 @@ export default function Dashboard() {
           user_id: user.id,
           name: habitData.name,
           frequency: habitData.frequency.toLowerCase(),
-          completed: habitData.completed,
+          completed: false, // Always start as incomplete
           reminder_enabled: habitData.reminder_enabled,
         });
 
       if (error) throw error;
       
-      // Refresh habits after adding
       await fetchHabits();
+      setIsAddModalOpen(false);
     } catch (err) {
       console.error('Error saving habit:', err);
     }
   };
-
-  // In Dashboard.tsx, update the toggleHabit function:
-
-const toggleHabit = async (habitId: string, currentStatus: boolean) => {
-  try {
-    // Update habit status
-    const { error } = await supabase
-      .from('habits')
-      .update({ completed: !currentStatus })
-      .eq('id', habitId);
-
-    if (error) throw error;
-
-    // LOG TO HABIT_LOGS when completing (not uncompleting)
-    if (!currentStatus && user) {
-      await supabase.from('habit_logs').insert({
-        user_id: user.id,
-        habit_id: habitId,
-        completed_at: new Date().toISOString()
-      });
-    }
-
-    // Update local state...
-    
-  } catch (err) {
-    console.error('Error updating habit:', err);
-  }
-};
 
   if (loading) {
     return (
@@ -174,9 +171,10 @@ const toggleHabit = async (habitId: string, currentStatus: boolean) => {
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Today's Habits</h2>
-            <p className="text-gray-500 mt-1">Keep up with your daily eco-friendly goals</p>
+            <p className="text-gray-500 mt-1">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
           </div>
-          {/* ⭐ FIXED: Open modal instead of navigating */}
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
@@ -196,7 +194,6 @@ const toggleHabit = async (habitId: string, currentStatus: boolean) => {
               <p className="text-gray-500 mb-6 max-w-md mx-auto">
                 Start building your eco-friendly routine by creating your first habit!
               </p>
-              {/* ⭐ FIXED: Open modal instead of navigating */}
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
@@ -213,7 +210,7 @@ const toggleHabit = async (habitId: string, currentStatus: boolean) => {
               >
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => toggleHabit(habit.id, habit.completed)}
+                    onClick={() => handleToggleHabit(habit.id)}
                     className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                       habit.completed
                         ? 'bg-green-500 border-green-500 text-white'
@@ -227,8 +224,10 @@ const toggleHabit = async (habitId: string, currentStatus: boolean) => {
                       {habit.name}
                     </p>
                     <p className="text-sm text-gray-500 capitalize flex items-center gap-2">
-                      <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                      {habit.frequency}
+                      <span className={`w-2 h-2 rounded-full ${
+                        habit.frequency === 'daily' ? 'bg-blue-400' : 'bg-purple-400'
+                      }`}></span>
+                      {habit.frequency} • Resets {habit.frequency === 'daily' ? 'tomorrow' : 'next week'}
                     </p>
                   </div>
                 </div>
@@ -276,7 +275,6 @@ const toggleHabit = async (habitId: string, currentStatus: boolean) => {
         </Link>
       </div>
 
-      {/* ⭐ Add Habit Modal */}
       <AddHabitModal 
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
