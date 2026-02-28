@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Signup() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,14 +28,16 @@ export default function Signup() {
     setLoading(true);
     setError('');
 
-    const { error } = await signUp(email, password);
+    // Use the updated signUp with fullName
+    const { error: signUpError } = await signUp(email, password, fullName);
 
-    if (error) {
-      setError(error.message);
-    } else {
-      // Auto-login after signup since email confirmation is disabled
-      navigate('/login');
+    if (signUpError) {
+      setError(signUpError.message || 'Failed to create account');
+      setLoading(false);
+      return;
     }
+
+    navigate('/login');
     setLoading(false);
   };
 
@@ -56,6 +59,22 @@ export default function Signup() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Full Name Field - NEW */}
+            <div>
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-900 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="fullName"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 bg-white text-gray-900 focus:outline-none focus:border-gray-500"
+                placeholder="John Doe"
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
                 Email
