@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, Filter, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Filter, Edit2, Trash2, CheckCircle2, Sparkles, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AddHabitModal from '../components/AddHabitModal';
 
@@ -15,12 +15,68 @@ interface Habit {
   created_at: string;
 }
 
+// AI Suggestions data - cycles through these
+const AI_SUGGESTIONS = [
+  {
+    id: 1,
+    title: "Zero-Waste Shopping",
+    description: "Bring reusable bags and containers for your next grocery trip to eliminate single-use plastics.",
+    impact: "High",
+    category: "Shopping"
+  },
+  {
+    id: 2,
+    title: "Meatless Mondays",
+    description: "Skip meat one day a week to reduce your carbon footprint and discover delicious plant-based meals.",
+    impact: "Medium",
+    category: "Diet"
+  },
+  {
+    id: 3,
+    title: "5-Minute Shower Challenge",
+    description: "Time your showers to stay under 5 minutes and save up to 12,000 gallons of water per year.",
+    impact: "High",
+    category: "Water"
+  },
+  {
+    id: 4,
+    title: "Digital Cleanup",
+    description: "Delete unused files and emails today—digital storage consumes more energy than you might think.",
+    impact: "Low",
+    category: "Digital"
+  },
+  {
+    id: 5,
+    title: "Local Produce First",
+    description: "Choose locally grown produce to cut transportation emissions and support your community.",
+    impact: "Medium",
+    category: "Food"
+  }
+];
+
 export default function MyHabits() {
   const { user, profile } = useAuth();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // AI Suggestion state
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Cycle through suggestions every 8 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentSuggestionIndex((prev) => (prev + 1) % AI_SUGGESTIONS.length);
+        setIsAnimating(false);
+      }, 300); // Wait for fade out before changing
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchHabits = async () => {
     if (!user) return;
@@ -36,7 +92,7 @@ export default function MyHabits() {
     } catch (err) {
       console.error('Error fetching habits:', err);
     } finally {
-      setLoading(false); // <-- FIX: Stop loading spinner
+      setLoading(false);
     }
   };
 
@@ -94,7 +150,7 @@ export default function MyHabits() {
         .rpc('toggle_habit_completion', {
           p_habit_id: habitId,
           p_user_id: user.id,
-          p_current_status: currentStatus // <-- FIX: Pass actual status
+          p_current_status: currentStatus
         });
 
       if (error) throw error;
@@ -102,6 +158,18 @@ export default function MyHabits() {
       await fetchHabits();
     } catch (err) {
       console.error('Error toggling habit:', err);
+    }
+  };
+
+  const currentSuggestion = AI_SUGGESTIONS[currentSuggestionIndex];
+
+  // Get impact color
+  const getImpactColor = (impact: string) => {
+    switch (impact) {
+      case 'High': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'Medium': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'Low': return 'bg-blue-100 text-blue-700 border-blue-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
@@ -130,6 +198,98 @@ export default function MyHabits() {
           <Plus className="w-5 h-5" />
           Add Habit
         </button>
+      </div>
+
+      {/* AI Suggestions Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 text-white shadow-lg">
+        {/* Animated background particles effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-4 -left-4 w-24 h-24 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
+          <div className="absolute top-1/2 -right-8 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-indigo-400/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative p-6 md:p-8">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
+                <Sparkles className="w-6 h-6 text-yellow-300" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  AI Suggestion
+                  <span className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full backdrop-blur-sm">
+                    Beta
+                  </span>
+                </h2>
+                <p className="text-purple-100 text-sm">Personalized eco-friendly habit ideas</p>
+              </div>
+            </div>
+            
+            {/* Suggestion indicators */}
+            <div className="flex gap-1.5">
+              {AI_SUGGESTIONS.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setIsAnimating(true);
+                    setTimeout(() => {
+                      setCurrentSuggestionIndex(idx);
+                      setIsAnimating(false);
+                    }, 300);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    idx === currentSuggestionIndex ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60'
+                  }`}
+                  aria-label={`Go to suggestion ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Suggestion Content with fade animation */}
+          <div 
+            className={`transition-all duration-300 transform ${
+              isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
+            }`}
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl">
+                <Lightbulb className="w-8 h-8 text-yellow-300" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-xl font-bold">{currentSuggestion.title}</h3>
+                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${getImpactColor(currentSuggestion.impact)}`}>
+                    {currentSuggestion.impact} Impact
+                  </span>
+                </div>
+                <p className="text-purple-50 leading-relaxed max-w-2xl">
+                  {currentSuggestion.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-white/10">
+              <div className="flex items-center gap-4 text-sm text-purple-200">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                  Category: {currentSuggestion.category}
+                </span>
+                <span>•</span>
+                <span>Updates every 8s</span>
+              </div>
+              
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-purple-700 rounded-lg hover:bg-purple-50 transition-colors font-medium text-sm shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Add This Habit
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filter */}
@@ -179,7 +339,7 @@ export default function MyHabits() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => toggleHabit(habit.id, habit.completed)}  // <-- FIX: Pass current status
+                    onClick={() => toggleHabit(habit.id, habit.completed)}
                     className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                       habit.completed
                         ? 'bg-green-500 border-green-500 text-white'
