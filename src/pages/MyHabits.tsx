@@ -26,25 +26,17 @@ export default function MyHabits() {
     if (!user) return;
     
     try {
-      let query = supabase
-        .from('habits')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (filter !== 'All') {
-        query = query.eq('frequency', filter.toLowerCase());
-      }
-        
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .rpc('get_habits_with_status', {
+          p_user_id: user.id
+        });
+
       if (error) throw error;
-      
       setHabits(data || []);
     } catch (err) {
       console.error('Error fetching habits:', err);
-      setHabits([]);
     } finally {
-      setLoading(false);
+      setLoading(false); // <-- FIX: Stop loading spinner
     }
   };
 
@@ -74,6 +66,7 @@ export default function MyHabits() {
       if (error) throw error;
       
       await fetchHabits();
+      setIsAddModalOpen(false);
     } catch (err) {
       console.error('Error saving habit:', err);
     }
@@ -93,7 +86,7 @@ export default function MyHabits() {
     }
   };
 
-  const toggleHabit = async (habitId: string) => {
+  const toggleHabit = async (habitId: string, currentStatus: boolean) => {
     if (!user) return;
 
     try {
@@ -101,7 +94,7 @@ export default function MyHabits() {
         .rpc('toggle_habit_completion', {
           p_habit_id: habitId,
           p_user_id: user.id,
-          p_current_status: false
+          p_current_status: currentStatus // <-- FIX: Pass actual status
         });
 
       if (error) throw error;
@@ -130,7 +123,6 @@ export default function MyHabits() {
             Manage your eco-friendly habits, {profile?.full_name?.split(' ')[0] || 'User'}
           </p>
         </div>
-        {/* ⭐ FIXED: Open modal instead of navigating */}
         <button
           onClick={() => setIsAddModalOpen(true)}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
@@ -169,7 +161,6 @@ export default function MyHabits() {
               ? "Create your first habit to get started!" 
               : `No ${filter.toLowerCase()} habits found. Try a different filter.`}
           </p>
-          {/* ⭐ FIXED: Open modal instead of navigating */}
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
@@ -188,7 +179,7 @@ export default function MyHabits() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => toggleHabit(habit.id, habit.completed)}
+                    onClick={() => toggleHabit(habit.id, habit.completed)}  // <-- FIX: Pass current status
                     className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                       habit.completed
                         ? 'bg-green-500 border-green-500 text-white'
@@ -238,7 +229,6 @@ export default function MyHabits() {
         </div>
       )}
 
-      {/* ⭐ Add Habit Modal */}
       <AddHabitModal 
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

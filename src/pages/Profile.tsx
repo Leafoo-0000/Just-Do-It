@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { User, Mail, Calendar, Award, Edit2, Check, X } from 'lucide-react';
+import { User, Mail, Calendar, Award, Edit2, Check, X, Flame, Target, TrendingUp } from 'lucide-react';
+import { useStats } from '../hooks/useStats';
 
 export default function Profile() {
   const { user, profile, refreshProfile } = useAuth();
@@ -9,6 +10,14 @@ export default function Profile() {
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // Use shared stats hook
+  const { stats, loading: statsLoading } = useStats(user?.id);
+
+  // Update fullName when profile changes
+  useEffect(() => {
+    setFullName(profile?.full_name || '');
+  }, [profile]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -54,9 +63,9 @@ export default function Profile() {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-        <p className="text-gray-600 mt-2">Manage your account information</p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Profile</h1>
+        <p className="text-gray-600 mt-2 text-sm lg:text-base">Manage your account information</p>
       </div>
 
       {/* Success/Error Message */}
@@ -73,20 +82,20 @@ export default function Profile() {
       {/* Profile Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Avatar & Name Section */}
-        <div className="p-8 bg-gradient-to-br from-green-50 to-blue-50 border-b border-gray-200">
-          <div className="flex items-center gap-6">
+        <div className="p-6 lg:p-8 bg-gradient-to-br from-green-50 to-blue-50 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 lg:gap-6">
             {/* Avatar */}
-            <div className="w-24 h-24 bg-green-600 text-white rounded-full flex items-center justify-center text-3xl font-bold shadow-lg">
+            <div className="w-20 h-20 lg:w-24 lg:h-24 bg-green-600 text-white rounded-full flex items-center justify-center text-2xl lg:text-3xl font-bold shadow-lg flex-shrink-0">
               {profile?.avatar_initials || user?.email?.[0].toUpperCase() || 'U'}
             </div>
             
-            <div className="flex-1">
+            <div className="flex-1 text-center sm:text-left w-full">
               {isEditing ? (
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 text-left">
                     Full Name
                   </label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <input
                       type="text"
                       value={fullName}
@@ -94,27 +103,29 @@ export default function Profile() {
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="Enter your full name"
                     />
-                    <button
-                      onClick={handleSave}
-                      disabled={loading}
-                      className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                      <Check className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex gap-2 justify-center sm:justify-start">
+                      <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                      >
+                        <Check className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={handleCancel}
+                        className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
                     {profile?.full_name || 'No name set'}
                   </h2>
-                  <p className="text-gray-500 mt-1">{user?.email}</p>
+                  <p className="text-gray-500 mt-1 text-sm lg:text-base">{user?.email}</p>
                   <button
                     onClick={() => setIsEditing(true)}
                     className="mt-3 inline-flex items-center gap-2 text-sm text-green-600 hover:text-green-700 font-medium"
@@ -129,27 +140,27 @@ export default function Profile() {
         </div>
 
         {/* Details Grid */}
-        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 lg:p-8 grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
           {/* Email */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Mail className="w-6 h-6 text-gray-600" />
+          <div className="flex items-start gap-3 lg:gap-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Mail className="w-5 h-5 lg:w-6 lg:h-6 text-gray-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Email</p>
-              <p className="text-gray-900 font-medium mt-1">{user?.email}</p>
+            <div className="min-w-0">
+              <p className="text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wide">Email</p>
+              <p className="text-gray-900 font-medium mt-1 text-sm lg:text-base truncate">{user?.email}</p>
               <p className="text-xs text-gray-400 mt-1">Cannot be changed</p>
             </div>
           </div>
 
           {/* Member Since */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Calendar className="w-6 h-6 text-gray-600" />
+          <div className="flex items-start gap-3 lg:gap-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Member Since</p>
-              <p className="text-gray-900 font-medium mt-1">
+              <p className="text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wide">Member Since</p>
+              <p className="text-gray-900 font-medium mt-1 text-sm lg:text-base">
                 {profile?.created_at 
                   ? new Date(profile.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -162,13 +173,13 @@ export default function Profile() {
           </div>
 
           {/* Sustainability Score */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Award className="w-6 h-6 text-green-600" />
+          <div className="flex items-start gap-3 lg:gap-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Award className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Sustainability Score</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
+              <p className="text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wide">Sustainability Score</p>
+              <p className="text-2xl lg:text-3xl font-bold text-green-600 mt-1">
                 {profile?.sustainability_score || 0}
               </p>
               <p className="text-xs text-gray-400 mt-1">Keep completing habits to increase!</p>
@@ -176,12 +187,12 @@ export default function Profile() {
           </div>
 
           {/* User ID */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <User className="w-6 h-6 text-gray-600" />
+          <div className="flex items-start gap-3 lg:gap-4">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <User className="w-5 h-5 lg:w-6 lg:h-6 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">User ID</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-500 uppercase tracking-wide">User ID</p>
               <p className="text-gray-900 font-medium mt-1 text-xs font-mono">
                 {user?.id?.slice(0, 8)}...{user?.id?.slice(-8)}
               </p>
@@ -190,19 +201,36 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-          <p className="text-4xl font-bold text-green-600">0</p>
-          <p className="text-gray-500 mt-2">Habits Completed</p>
+      {/* Quick Stats - Using shared stats */}
+      <div className="grid grid-cols-3 gap-3 lg:gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 text-center hover:shadow-md transition-shadow">
+          <div className="w-8 h-8 lg:w-12 lg:h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 lg:mb-3">
+            <Target className="w-4 h-4 lg:w-6 lg:h-6 text-green-600" />
+          </div>
+          <p className="text-xl lg:text-4xl font-bold text-green-600">
+            {statsLoading ? '...' : stats.totalCompleted}
+          </p>
+          <p className="text-xs lg:text-base text-gray-500 mt-1 lg:mt-2">Completed</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-          <p className="text-4xl font-bold text-blue-600">0</p>
-          <p className="text-gray-500 mt-2">Day Streak</p>
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 text-center hover:shadow-md transition-shadow">
+          <div className="w-8 h-8 lg:w-12 lg:h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2 lg:mb-3">
+            <Flame className="w-4 h-4 lg:w-6 lg:h-6 text-orange-600" />
+          </div>
+          <p className="text-xl lg:text-4xl font-bold text-orange-600">
+            {statsLoading ? '...' : stats.currentStreak}
+          </p>
+          <p className="text-xs lg:text-base text-gray-500 mt-1 lg:mt-2">Day Streak</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-          <p className="text-4xl font-bold text-purple-600">0%</p>
-          <p className="text-gray-500 mt-2">Completion Rate</p>
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-6 text-center hover:shadow-md transition-shadow">
+          <div className="w-8 h-8 lg:w-12 lg:h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 lg:mb-3">
+            <TrendingUp className="w-4 h-4 lg:w-6 lg:h-6 text-purple-600" />
+          </div>
+          <p className="text-xl lg:text-4xl font-bold text-purple-600">
+            {statsLoading ? '...' : `${stats.completionRate}%`}
+          </p>
+          <p className="text-xs lg:text-base text-gray-500 mt-1 lg:mt-2">Completion Rate</p>
         </div>
       </div>
     </div>

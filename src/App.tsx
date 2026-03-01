@@ -1,8 +1,7 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
-import { TopNavbar } from './components/TopNavbar';
 import Dashboard from './pages/Dashboard';
 import MyHabits from './pages/MyHabits';
 import Login from './pages/Login';
@@ -10,16 +9,18 @@ import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Progress from './pages/Progress/index';
 
-function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+// Layout component using Outlet
+function AuthenticatedLayout() {
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <TopNavbar />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
-      </div>
+      <main className="flex-1 lg:ml-0">
+        <div className="pt-16 lg:pt-0">
+          <div className="p-4 lg:p-8 min-h-screen">
+            <Outlet />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
@@ -48,47 +49,15 @@ function AppContent() {
           element={user ? <Navigate to="/dashboard" /> : <Signup />} 
         />
 
-        {/* Protected routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <AuthenticatedLayout>
-                <Dashboard />
-              </AuthenticatedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-habits"
-          element={
-            <ProtectedRoute>
-              <AuthenticatedLayout>
-                <MyHabits />
-              </AuthenticatedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/progress"
-          element={
-            <ProtectedRoute>
-              <AuthenticatedLayout>
-                <Progress />
-              </AuthenticatedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <AuthenticatedLayout>
-                <Profile />
-              </AuthenticatedLayout>
-            </ProtectedRoute>
-          }
-        />
+        {/* Protected routes - using Outlet pattern */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AuthenticatedLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/my-habits" element={<MyHabits />} />
+            <Route path="/progress" element={<Progress />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+        </Route>
 
         {/* Default redirect */}
         <Route 
@@ -104,6 +73,7 @@ function AppContent() {
   );
 }
 
+// FIXED: Added the missing () and {
 export default function App() {
   return <AppContent />;
-}
+} 

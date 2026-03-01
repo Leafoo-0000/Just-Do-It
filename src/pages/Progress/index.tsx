@@ -12,6 +12,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useStats } from '../../hooks/useStats';
 import { useProgressData } from './hooks/useProgressData';
 import { StatCard } from './components/StatCard';
 import { WeeklyChart } from './components/WeeklyChart';
@@ -23,13 +24,16 @@ export default function Progress() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
   const [mounted, setMounted] = useState(false);
 
+  // Use shared stats for top cards
+  const { stats, loading: statsLoading, refresh: refreshStats } = useStats(user?.id);
+  
+  // Use progress data for charts
   const {
     habits,
     logs,
-    loading,
+    loading: progressLoading,
     lastUpdated,
-    stats,
-    fetchData,
+    fetchData: fetchProgressData,
     getChartData,
     monthlyData,
     distributionData
@@ -39,7 +43,13 @@ export default function Progress() {
     setMounted(true);
   }, []);
 
+  const handleRefresh = () => {
+    refreshStats();
+    fetchProgressData();
+  };
+
   const chartData = getChartData(timeRange);
+  const loading = statsLoading || progressLoading;
 
   if (loading && !habits.length) {
     return (
@@ -54,15 +64,15 @@ export default function Progress() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 lg:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <TrendingUp className="h-8 w-8 text-green-600" />
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2 lg:gap-3">
+              <TrendingUp className="h-6 w-6 lg:h-8 lg:w-8 text-green-600" />
               Your Progress
             </h1>
-            <p className="mt-2 text-gray-600">Track your sustainability journey and habit consistency</p>
+            <p className="mt-1 lg:mt-2 text-gray-600 text-sm lg:text-base">Track your sustainability journey and habit consistency</p>
             {lastUpdated && (
               <p className="text-xs text-gray-400 mt-1">
                 Last updated: {lastUpdated.toLocaleTimeString()}
@@ -71,9 +81,9 @@ export default function Progress() {
           </div>
           
           <button
-            onClick={fetchData}
+            onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 w-full sm:w-auto"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             {loading ? 'Refreshing...' : 'Refresh'}
@@ -82,17 +92,17 @@ export default function Progress() {
 
         {/* Empty State - No Habits */}
         {hasNoHabits && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Leaf className="h-8 w-8 text-green-600" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 lg:p-12 text-center">
+            <div className="w-14 h-14 lg:w-16 lg:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Leaf className="h-7 w-7 lg:h-8 lg:w-8 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Habits Yet</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">No Habits Yet</h3>
+            <p className="text-gray-500 mb-6 max-w-md mx-auto text-sm">
               Start tracking your eco-friendly habits to see your progress and build a sustainable lifestyle.
             </p>
             <Link
               to="/my-habits"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
               <Plus className="h-5 w-5" />
               Create Your First Habit
@@ -102,17 +112,17 @@ export default function Progress() {
 
         {/* Empty State - Habits exist but no logs yet */}
         {!hasNoHabits && hasNoLogs && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Calendar className="h-8 w-8 text-blue-600" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 lg:p-12 text-center mb-6 lg:mb-8">
+            <div className="w-14 h-14 lg:w-16 lg:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="h-7 w-7 lg:h-8 lg:w-8 text-blue-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Start Building Your History</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Start Building Your History</h3>
+            <p className="text-gray-500 mb-6 max-w-md mx-auto text-sm">
               You have {habits.length} habit(s) ready! Complete them to start tracking your progress over time.
             </p>
             <Link
               to="/dashboard"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
               <CheckCircle2 className="h-5 w-5" />
               Go to Dashboard
@@ -120,11 +130,11 @@ export default function Progress() {
           </div>
         )}
 
-        {/* Stats Grid */}
-        {!hasNoHabits && stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Stats Grid - Using shared stats */}
+        {!hasNoHabits && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
             <StatCard
-              icon={<CheckCircle2 className="h-6 w-6 text-green-600" />}
+              icon={<CheckCircle2 className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />}
               label="Completed Today"
               value={stats.completedToday}
               subtext={`of ${stats.totalHabits} habits`}
@@ -132,7 +142,7 @@ export default function Progress() {
               trendUp={stats.completedToday > 0}
             />
             <StatCard
-              icon={<Target className="h-6 w-6 text-blue-600" />}
+              icon={<Target className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600" />}
               label="Completion Rate"
               value={`${stats.completionRate}%`}
               subtext="Today's progress"
@@ -140,7 +150,7 @@ export default function Progress() {
               trendUp={stats.completionRate > 50}
             />
             <StatCard
-              icon={<Flame className="h-6 w-6 text-orange-500" />}
+              icon={<Flame className="h-5 w-5 lg:h-6 lg:w-6 text-orange-500" />}
               label="Current Streak"
               value={`${stats.currentStreak} days`}
               subtext={`Best: ${stats.bestStreak} days`}
@@ -149,7 +159,7 @@ export default function Progress() {
               highlight={stats.currentStreak > 3}
             />
             <StatCard
-              icon={<Leaf className="h-6 w-6 text-green-600" />}
+              icon={<Award className="h-5 w-5 lg:h-6 lg:w-6 text-green-600" />}
               label="Total Completed"
               value={stats.totalCompleted}
               subtext="All time"
@@ -163,13 +173,13 @@ export default function Progress() {
         {!hasNoHabits && mounted && (
           <>
             {/* Time Range Selector */}
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-end mb-4 lg:mb-6">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex gap-1">
                 {(['week', 'month', 'year'] as const).map((range) => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
+                    className={`px-3 lg:px-4 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
                       timeRange === range
                         ? 'bg-green-600 text-white'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -181,7 +191,7 @@ export default function Progress() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-6 lg:mb-8">
               <WeeklyChart data={chartData} timeRange={timeRange} />
               <DistributionChart data={distributionData} habits={habits} />
             </div>
@@ -192,28 +202,28 @@ export default function Progress() {
 
         {/* Insights Section */}
         {!hasNoHabits && (
-          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-white/20 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-white" />
+          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg p-5 lg:p-6 text-white">
+            <div className="flex items-start gap-3 lg:gap-4">
+              <div className="p-2 lg:p-3 bg-white/20 rounded-lg">
+                <TrendingUp className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold mb-2">Sustainability Insights</h3>
-                <p className="text-green-100 mb-4">
-                  {stats && stats.currentStreak > 3 
+                <h3 className="text-base lg:text-lg font-semibold mb-2">Sustainability Insights</h3>
+                <p className="text-green-100 mb-4 text-sm lg:text-base">
+                  {stats.currentStreak > 3 
                     ? "Amazing work! You're building strong eco-friendly habits. Your consistency is making a real impact on the planet."
-                    : stats && stats.currentStreak > 0
+                    : stats.currentStreak > 0
                     ? "Good start! Keep going to build a streak and make a lasting impact."
                     : "Start completing your habits today to see your impact grow!"}
                 </p>
-                <div className="flex gap-4 text-sm">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs lg:text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
-                    <span>CO₂ Saved: ~{(stats?.totalCompleted || 0) * 0.5}kg</span>
+                    <span>CO₂ Saved: ~{(stats.totalCompleted) * 0.5}kg</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
-                    <span>Trees equivalent: ~{Math.floor((stats?.totalCompleted || 0) * 0.1)}</span>
+                    <span>Trees equivalent: ~{Math.floor((stats.totalCompleted) * 0.1)}</span>
                   </div>
                 </div>
               </div>
