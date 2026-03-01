@@ -9,7 +9,7 @@
 
 > A personal habit-tracking web application with a sustainability focus. Track your eco-friendly habits, visualize your progress, and build a greener lifestyle—one habit at a time.
 
-![Dashboard Preview](https://via.placeholder.com/800x400/10B981/FFFFFF?text=Just-Do-It+Dashboard)
+![Dashboard Preview](src/assets/preview.png)
 
 ---
 
