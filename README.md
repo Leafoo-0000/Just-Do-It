@@ -1,6 +1,4 @@
- Here's a comprehensive README for your Just-Do-It project:
 
-```markdown
 # 🌱 Just-Do-It
 
 [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://just-do-it-five.vercel.app)
