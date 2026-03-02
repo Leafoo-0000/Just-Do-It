@@ -1,0 +1,30 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="256" height="256" fill="#1f2937"/>
+  
+  <!-- Outer circle (eco-friendly green ring) -->
+  <circle cx="128" cy="128" r="120" fill="none" stroke="#10b981" stroke-width="8"/>
+  
+  <!-- Inner circle (lighter background) -->
+  <circle cx="128" cy="128" r="110" fill="#1f2937"/>
+  
+  <!-- Check mark (habit completion) -->
+  <g transform="translate(128, 128)">
+    <!-- Checkmark path - bold and confident -->
+    <path
+      d="M -35 0 L -8 28 L 45 -25"
+      stroke="#10b981"
+      stroke-width="18"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+      filter="drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3))"
+    />
+  </g>
+  
+  <!-- Accent dots (leaves/growth) -->
+  <circle cx="200" cy="90" r="6" fill="#34d399" opacity="0.8"/>
+  <circle cx="215" cy="135" r="5" fill="#10b981" opacity="0.6"/>
+  <circle cx="60" cy="75" r="5" fill="#34d399" opacity="0.7"/>
+  <circle cx="50" cy="155" r="6" fill="#10b981" opacity="0.5"/>
+</svg>
