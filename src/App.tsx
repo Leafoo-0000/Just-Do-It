@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import MyHabits from './pages/MyHabits';
 import Login from './pages/Login';
@@ -41,6 +42,10 @@ function AppContent() {
       <Routes>
         {/* Public routes */}
         <Route 
+          path="/" 
+          element={user ? <Navigate to="/dashboard" /> : <LandingPage />} 
+        />
+        <Route 
           path="/login" 
           element={user ? <Navigate to="/dashboard" /> : <Login />} 
         />
@@ -59,21 +64,16 @@ function AppContent() {
           </Route>
         </Route>
 
-        {/* Default redirect */}
-        <Route 
-          path="/" 
-          element={<Navigate to={user ? "/dashboard" : "/login"} />} 
-        />
+        {/* Catch all redirect */}
         <Route 
           path="*" 
-          element={<Navigate to={user ? "/dashboard" : "/login"} />} 
+          element={<Navigate to={user ? "/dashboard" : "/"} />} 
         />
       </Routes>
     </Router>
   );
 }
 
-// FIXED: Added the missing () and {
 export default function App() {
   return <AppContent />;
-} 
+}
