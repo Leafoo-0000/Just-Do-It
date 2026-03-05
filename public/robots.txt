@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://just-do-it-five.vercel.app/sitemap.xml
+
+# Disallow protected routes from indexing (optional - Google can't access them anyway without auth)
+Disallow: /dashboard
+Disallow: /my-habits
+Disallow: /progress
+Disallow: /profile
